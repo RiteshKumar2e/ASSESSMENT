@@ -179,3 +179,9 @@ def test_daily_energy_matches_day_view():
     daily = {d["date"]: d for d in client.get("/api/accuracy").json()["daily"]}
     assert daily["2026-01-28"]["actual_mwh"] == pytest.approx(day["actual_mwh"])
     assert daily["2026-01-28"]["forecast_mwh"] == pytest.approx(day["forecast_mwh"])
+
+
+def test_export_filename_is_readable_cross_origin():
+    resp = client.get("/api/export?dataset=matched", headers={"Origin": "https://example.org"})
+    assert "Content-Disposition" in resp.headers.get("access-control-expose-headers", "")
+    assert 'filename="wind_forecast_matched_' in resp.headers["content-disposition"]

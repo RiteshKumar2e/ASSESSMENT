@@ -50,7 +50,14 @@ app = FastAPI(
     "January 2026 purchase decisions. Data: Elexon BMRS (FUELHH, WINDFOR).",
     version="2.0.0",
 )
-app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+    # Lets a frontend on another origin (Vercel) read the CSV file name from /api/export.
+    expose_headers=["Content-Disposition"],
+)
 # JS bundles and JSON compress roughly 4:1; worthwhile when no proxy/CDN does it upstream.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 

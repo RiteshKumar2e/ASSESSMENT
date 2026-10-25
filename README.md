@@ -6,9 +6,14 @@ A web app for the team at a UK energy utility that buys power in the GB day-ahea
 2. **How far that forecast can be trusted.** MAE, RMSE, bias and WAPE, error percentiles, error by lead time, hour and day, plus a bias correction that uses only data available at decision time.
 
 **Live app (frontend, Vercel):** https://q7m2vx.vercel.app
-**API (Render):** `[PENDING: new Render URL after the service is recreated for the renamed repo]` (health: `/api/health`, docs: `/docs`)
+**API (Render):** https://q7m2vx.onrender.com (health: [`/api/health`](https://q7m2vx.onrender.com/api/health), docs: [`/docs`](https://q7m2vx.onrender.com/docs))
 
-> Status 25 Oct 2026: the frontend is live at https://q7m2vx.vercel.app (all page links open). The backend is being recreated on Render after the repository rename, so the pages cannot load data until the new API URL is set in Vercel. See [Deployment](#deployment).
+> Verified 25 Oct 2026 in a real browser:
+> - The Vercel site loads its data from the Render API, and all 16 API calls returned 200 with no console errors.
+> - The Day-ahead brief, Forecast accuracy and Method & data pages all open directly by URL.
+> - The CSV exports return the expected row counts (24, 744, 1,488 and 14,383).
+>
+> The free Render plan sleeps when idle, so the first load after a pause can take ~30–60 s. See [Deployment](#deployment).
 
 **Demo video:** `[PLACEHOLDER: unlisted YouTube URL, to be added after recording]`
 
@@ -338,7 +343,10 @@ The tests cover:
 - security headers, unknown API routes, search length limits, and SPA routes with a real 404 status.
 
 Browser checks used headless Microsoft Edge, driven with real mouse, keyboard and scroll input via the DevTools protocol. These are emulated widths, not a physical mobile device:
-- **Live site (25 Oct 2026, before the rename):** the previous deployment (frontend on Vercel, API on Render) loaded real data in a real browser: every API call returned 200, there were no console errors, and in-app navigation worked.
+- **Live site (25 Oct 2026):** https://q7m2vx.vercel.app was checked with the API at https://q7m2vx.onrender.com:
+  - The brief (28 Jan: 267.2 vs 138.2 GWh, revisions, hour history), the accuracy page (MAE 2,022 MW, all panels) and the method page (1,488/1,488 half-hours, 744/744 matched hours) all loaded.
+  - All four CSV exports downloaded the expected row counts.
+  - All 16 API calls returned 200, with 0 console errors.
 - **Docker container:** the same workflow ran against http://localhost:8000. Blocking the API showed the error state, and Retry recovered.
 - **Tables:** no table needs horizontal scrolling at 320 px or 375 px.
 - **Overflow:** every page at 320, 375, 390, 768, 1024 and 1440 px has no page-level horizontal overflow (after fixing one at 320 px).
@@ -360,8 +368,8 @@ Browser checks used headless Microsoft Edge, driven with real mouse, keyboard an
 
 | Part | URL | Status |
 |---|---|---|
-| Frontend (Vercel) | https://q7m2vx.vercel.app | Live over HTTPS, all page links open. The current build has **no** `VITE_API_BASE_URL`, so it cannot load data yet |
-| Backend API (Render) | `[PENDING]` | The previous service was removed; a new one is being created from the renamed repo (`q7m2vx`) |
+| Frontend (Vercel) | https://q7m2vx.vercel.app | Live over HTTPS; all page links open directly. The build calls the Render API (`VITE_API_BASE_URL`) |
+| Backend API (Render) | https://q7m2vx.onrender.com | Live: `/api/health` returns `{"status":"ok",…}` (docs at `/docs`). CORS allows only https://q7m2vx.vercel.app; HSTS is on |
 | Page links (`/accuracy`, `/method`, `/privacy`, `/terms`) | — | Live: `frontend/vercel.json` rewrites them to `/index.html`, and each opens directly. Static files (`/robots.txt`, `/favicon.svg`, `/og-image.png`) are still served as files |
 
 ### How it is deployed (for reference)
@@ -381,7 +389,7 @@ Browser checks used headless Microsoft Edge, driven with real mouse, keyboard an
 - On the free plan the service sleeps when idle; the first request afterwards takes about 30–60 s.
 
 **Frontend: Vercel project with Root Directory `frontend`**
-- Environment variables (Production): `VITE_API_BASE_URL=<Render URL>` and `VITE_SITE_URL=https://q7m2vx.vercel.app`. Vercel reads its own settings, not the git-ignored `.env`, and the values take effect on the next build.
+- Environment variables (Production): `VITE_API_BASE_URL=https://q7m2vx.onrender.com` and `VITE_SITE_URL=https://q7m2vx.vercel.app`. Vercel reads its own settings, not the git-ignored `.env`, and the values take effect on the next build.
 - `frontend/vercel.json` provides the SPA rewrite, security headers and asset caching.
 
 **Alternative: a single service.** Build `backend/Dockerfile` with the repo root as context. It serves the API and the pages on `$PORT`, with page routes, real 404 status and the CSP handled by FastAPI. Set `ENABLE_HSTS=true` when it is behind HTTPS.
