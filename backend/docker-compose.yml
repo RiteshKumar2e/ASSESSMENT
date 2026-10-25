@@ -1,12 +1,27 @@
-# Run from the backend/ folder:  docker compose up --build
+# Local Docker run of the whole app (API + built React frontend in one container).
+#   cd backend
+#   docker compose up --build -d        -> http://localhost:8000
+# Port 8000 busy (e.g. a local uvicorn dev server)? Pick another host port:
+#   PowerShell:  $env:APP_PORT=8080; docker compose up --build -d
 # The build context is the repo root so the image can also build ../frontend.
+name: wind-forecast-monitor
+
 services:
   app:
     build:
       context: ..
       dockerfile: backend/Dockerfile
+    image: wind-forecast-monitor:local
     ports:
-      - "8001:8001"
+      - "${APP_PORT:-8000}:8000"
     environment:
-      PORT: "8001"
+      PORT: "8000"
+      LOG_LEVEL: "INFO"
+      # Pages and API share one origin here, so no CORS or HSTS settings are needed locally.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
     restart: unless-stopped

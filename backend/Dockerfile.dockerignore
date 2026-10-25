@@ -9,3 +9,6 @@ backend/static
 **/.env
 **/.env.*
 !**/.env.example
+**/*.tsbuildinfo
+**/.vercel
+backend/tests

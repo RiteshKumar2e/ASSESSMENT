@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
     server: {
       // In dev, /api is proxied to FastAPI. 127.0.0.1 rather than localhost: Node resolves
       // localhost to ::1 first, uvicorn listens on IPv4 only, and the proxy would return 500.
-      proxy: { "/api": env.VITE_PROXY_TARGET || "http://127.0.0.1:8001" },
+      proxy: { "/api": env.VITE_PROXY_TARGET || "http://127.0.0.1:8000" },
     },
   };
 });

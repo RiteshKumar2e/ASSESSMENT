@@ -108,9 +108,8 @@ flowchart LR
 │   ├── .env.example            backend settings template
 │   ├── Dockerfile              Node build of the frontend, then Python runtime (build context = repo root)
 │   ├── Dockerfile.dockerignore
-│   ├── docker-compose.yml      `docker compose up --build` serves the app on :8001
-│   ├── requirements.txt / requirements-dev.txt / pyproject.toml
-│   └── run.md                  step-by-step run guide, including Windows commands and troubleshooting
+│   ├── docker-compose.yml      `docker compose up --build` serves the app on :8000
+│   └── requirements.txt / requirements-dev.txt / pyproject.toml
 └── frontend/
     ├── public/                 favicon.svg, favicon-32.png, apple-touch-icon.png, og-image.png
     ├── src/
@@ -132,18 +131,16 @@ flowchart LR
 
 ## Running it
 
-Step-by-step instructions, including Windows specifics, are in [backend/run.md](backend/run.md).
-
 ### Without Docker (two terminals)
 
 ```powershell
-# Terminal 1: backend on :8001
+# Terminal 1: backend on :8000
 cd backend
 python -m venv .venv
 .venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
 copy .env.example .env            # macOS/Linux: cp .env.example .env
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8000
 ```
 
 ```powershell
@@ -154,16 +151,52 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. API docs are at http://localhost:8001/docs.
+Open http://localhost:5173. API docs are at http://localhost:8000/docs.
 
-### With Docker
+### With Docker (Windows 11 + Docker Desktop, WSL 2)
+
+**Prerequisites:** Docker Desktop running, and an internet connection for the first build, which pulls `node:22-alpine` and `python:3.12-slim`.
+
+**What runs:** one container (`wind-forecast-monitor-app-1`, image `wind-forecast-monitor:local`, about 240 MB).
+- A Node stage builds the React app.
+- The Python stage serves both the API and the built pages on the same origin. The browser calls `/api` relatively, so no backend hostname is needed.
+- Health check: `/api/health`.
+- It runs as a non-root user.
+- No `.env` file is copied into the image.
 
 ```powershell
 cd backend
-docker compose up --build
+docker compose up --build -d        # build and start in the background
+docker compose ps                   # STATUS should become "(healthy)" within ~30 s
 ```
 
-Open http://localhost:8001. One container serves the API and the built frontend, with a health check on `/api/health`. **This was not verified on the development machine, because Docker is not installed there.**
+| URL | What |
+|---|---|
+| http://localhost:8000 | the app |
+| http://localhost:8000/api/health | health check, `{"status":"ok",…}` |
+| http://localhost:8000/docs | interactive API docs |
+
+Useful commands, run from `backend/`:
+
+```powershell
+docker compose logs -f --tail=100   # follow the logs
+docker compose up --build -d        # rebuild after code changes
+docker compose restart              # restart without rebuilding
+docker compose down                 # stop and remove the container
+docker compose config               # validate the compose file
+```
+
+**Port 8000 already in use?** Choose another host port. The container still listens on 8000 inside:
+
+```powershell
+$env:APP_PORT=8080; docker compose up --build -d     # then open http://localhost:8080
+```
+
+**Verified on Windows 11** (Docker Desktop, Engine 29.9.2, Compose v5.6.1, WSL 2):
+- the image builds in about 4 minutes on the first run, faster from cache;
+- the container reports `healthy`, and every page and API route answers;
+- the browser workflow loads real data with no console errors;
+- if the API is unreachable, the pages show an error with a working Retry.
 
 ## Configuration
 
@@ -173,7 +206,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `PORT` | `8001` | Port inside the Docker container |
+| `PORT` | `8000` | Port inside the Docker container |
 | `CORS_ORIGINS` | `*` (example: `https://assessment-seven-beta.vercel.app,http://localhost:5173`) | Comma-separated allowed origins. Set it to the frontend URL in production when hosting separately |
 | `SNAPSHOT_PATH` | `data/snapshot.json` | Data file, relative to `backend/` |
 | `STATIC_DIR` | `static` | Built frontend to serve, if present |
@@ -185,7 +218,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 | Variable | Default | Meaning |
 |---|---|---|
 | `VITE_API_BASE_URL` | _(empty)_ | API origin when the frontend is hosted separately. Empty means same origin |
-| `VITE_PROXY_TARGET` | `http://127.0.0.1:8001` | Dev server only: where `/api` is proxied |
+| `VITE_PROXY_TARGET` | `http://127.0.0.1:8000` | Dev server only: where `/api` is proxied |
 | `VITE_SITE_URL` | _(empty)_ (example: `https://assessment-seven-beta.vercel.app`) | Production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
 | `VITE_CONTACT_EMAIL` | _(empty)_ | Shown as a `mailto:` link in the footer and legal pages when set |
 | `VITE_OPERATOR_NAME` | _(empty)_ | Operator's legal name, shown on the legal pages when set |
@@ -262,7 +295,7 @@ Error = **forecast − actual** in MW per matched hour. A positive error means a
 ## Security, privacy and SEO
 
 - **Headers.** Every response carries `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` and `Permissions-Policy`. HTML responses also get a strict `Content-Security-Policy`: self-hosted assets only, no inline scripts. `Strict-Transport-Security` is sent only when `ENABLE_HSTS=true`.
-- **HTTPS.** The app makes no absolute `http://` requests, so there is no mixed content once it is served over HTTPS. The Docker image runs uvicorn with `--proxy-headers`, which trusts `X-Forwarded-*` only from `FORWARDED_ALLOW_IPS` (default `127.0.0.1`). Set that variable to your proxy's address when deploying. **HTTPS has not been verified because nothing is deployed yet.**
+- **HTTPS.** The app makes no absolute `http://` requests, so there is no mixed content once it is served over HTTPS. The Docker image runs uvicorn with `--proxy-headers`, which trusts `X-Forwarded-*` only from `FORWARDED_ALLOW_IPS` (default `127.0.0.1`). Set that variable to your proxy's address when deploying. **Verified on 25 Oct 2026:** the Vercel frontend redirects `http://` to `https://`, and the Render API is served over HTTPS with `Strict-Transport-Security`.
 - **Caching and compression.** Fingerprinted `/assets/*` files are cached for a year; HTML is `no-cache`; responses are gzip-compressed.
 - **Privacy and cookies.** The app sets **no cookies**, uses **no browser storage**, loads **no third-party scripts or fonts**, and has **no analytics**. A consent banner would therefore be misleading and is not shown. To add analytics later:
   1. pick a provider;
@@ -363,7 +396,6 @@ After deploying, open `/api/health` and each page over HTTPS, and update the sta
 - **Over-forecast cause unconfirmed.** January showed a persistent over-forecast. A plausible contributor is curtailment: FUELHH is metered output after constraint actions, while WINDFOR forecasts available output. This is a hypothesis to check with the client.
 - **Short sample.** One month of data gives indicative percentiles, not a seasonal calibration.
 - **Narrow scope.** National wind only: no demand, price, embedded solar or regional data.
-- **Docker untested.** The Docker build was not run on the development machine (Docker is not installed); CI or a Docker host should confirm it.
 
 ## Use of AI tools
 
