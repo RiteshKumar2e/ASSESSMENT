@@ -6,7 +6,9 @@ A web app for the team at a UK energy utility that buys power in the GB day-ahea
 2. **How far that forecast can be trusted.** MAE, RMSE, bias and WAPE, error percentiles, error by lead time, hour and day, plus a bias correction that uses only data available at decision time.
 
 **Live app (frontend, Vercel):** https://assessment-seven-beta.vercel.app
-> Status checked on 25 Oct 2026: the frontend is served over HTTPS. The API is live on Render at https://assessment-feb1.onrender.com; the frontend uses it once `VITE_API_BASE_URL` is set in Vercel. See [Deployment](#deployment).
+**API (Render):** https://assessment-feb1.onrender.com (health: `/api/health`, docs: `/docs`)
+
+> Verified on 25 Oct 2026 in a real browser: the Vercel site loads its data from the Render API, all API calls return 200, and there are no console errors. The free Render plan sleeps when idle, so the first load after a pause can take ~30–60 s. See [Deployment](#deployment).
 
 **Demo video:** not recorded yet.
 
@@ -124,6 +126,7 @@ flowchart LR
     │   └── pages/              NotFound, Legal (Privacy, Terms)
     ├── index.html              default metadata, Open Graph/Twitter tags, icons
     ├── vite.config.ts          dev proxy, chunk splitting, robots.txt / sitemap.xml generation
+    ├── vercel.json             Vercel: SPA rewrite for page links, security and cache headers
     └── .env.example            frontend settings template
 ```
 
@@ -352,8 +355,8 @@ Browser checks used headless Microsoft Edge. These are emulated widths, not a ph
 | Part | URL | Status |
 |---|---|---|
 | Frontend (Vercel) | https://assessment-seven-beta.vercel.app | Live over HTTPS; `http://` redirects to `https://` |
-| Backend API (Render) | https://assessment-feb1.onrender.com | Live: `/api/health` returns `{"status":"ok",…}` (docs at `/docs`); CORS allows only the Vercel site; HSTS on. The frontend shows data once `VITE_API_BASE_URL` is set in Vercel and the site is redeployed |
-| Deep links (`/accuracy`, `/method`, `/privacy`, `/terms`) | — | Return Vercel's 404 until a rewrite to `/index.html` is added |
+| Backend API (Render) | https://assessment-feb1.onrender.com | Live: `/api/health` returns `{"status":"ok",…}` (docs at `/docs`); CORS allows only the Vercel site; HSTS on. Connected: the Vercel build uses it via `VITE_API_BASE_URL` |
+| Deep links (`/accuracy`, `/method`, `/privacy`, `/terms`) | — | Fixed by `frontend/vercel.json` (rewrite to `/index.html`); takes effect after the next Vercel deploy |
 
 To finish the split deployment:
 
