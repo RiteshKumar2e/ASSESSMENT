@@ -211,7 +211,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 | Variable | Default | Meaning |
 |---|---|---|
 | `PORT` | `8000` | Port inside the Docker container |
-| `CORS_ORIGINS` | `*` (example: `https://q7m2vx.vercel.app,http://localhost:5173`) | Comma-separated allowed origins. Set it to the frontend URL in production when hosting separately |
+| `CORS_ORIGINS` | `*` (example: `https://your-frontend.vercel.app,http://localhost:5173`) | Comma-separated allowed origins. Set it to the frontend URL in production when hosting separately |
 | `SNAPSHOT_PATH` | `data/snapshot.json` | Data file, relative to `backend/` |
 | `STATIC_DIR` | `static` | Built frontend to serve, if present |
 | `LOG_LEVEL` | `INFO` | Python log level |
@@ -223,7 +223,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 |---|---|---|
 | `VITE_API_BASE_URL` | _(empty)_ | API origin when the frontend is hosted separately. Empty means same origin |
 | `VITE_PROXY_TARGET` | `http://127.0.0.1:8000` | Dev server only: where `/api` is proxied |
-| `VITE_SITE_URL` | _(empty)_ (example: `https://q7m2vx.vercel.app`) | Production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
+| `VITE_SITE_URL` | _(empty)_ (example: `https://your-frontend.vercel.app`) | Production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
 | `VITE_CONTACT_EMAIL` | _(empty)_ | Shown as a `mailto:` link in the footer and legal pages when set |
 | `VITE_OPERATOR_NAME` | _(empty)_ | Operator's legal name, shown on the legal pages when set |
 
