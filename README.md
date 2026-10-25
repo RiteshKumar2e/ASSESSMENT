@@ -5,8 +5,10 @@ A web app for the team at a UK energy utility that buys power in the GB day-ahea
 1. **The wind forecast that was available at the moment of purchase.** This is the latest Elexon `WINDFOR` run published before the day-ahead cutoff on D-1, compared with metered `FUELHH` wind output.
 2. **How far that forecast can be trusted.** MAE, RMSE, bias and WAPE, error percentiles, error by lead time, hour and day, plus a bias correction that uses only data available at decision time.
 
-**Live app:** not deployed yet. Add the verified URL here after deployment.
-**Demo video:** not recorded yet. See [DEMO_SCRIPT.md](DEMO_SCRIPT.md).
+**Live app (frontend, Vercel):** https://assessment-seven-beta.vercel.app
+> Status checked on 25 Oct 2026: the frontend is served over HTTPS. The API is live on Render at https://assessment-feb1.onrender.com; the frontend uses it once `VITE_API_BASE_URL` is set in Vercel. See [Deployment](#deployment).
+
+**Demo video:** not recorded yet.
 
 The scope is Elexon BMRS national wind only. Built with React + TypeScript (frontend) and Python FastAPI (backend), with Docker.
 
@@ -91,7 +93,6 @@ flowchart LR
 ```
 .
 ├── README.md
-├── DEMO_SCRIPT.md              timed script and checklist for the 10-minute video
 ├── .gitignore                  ignores .env files, node_modules, builds, virtualenvs, caches
 ├── backend/
 │   ├── app/
@@ -173,7 +174,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 | Variable | Default | Meaning |
 |---|---|---|
 | `PORT` | `8001` | Port inside the Docker container |
-| `CORS_ORIGINS` | `*` | Comma-separated allowed origins. **Set it to the frontend URL in production** when hosting separately |
+| `CORS_ORIGINS` | `*` (example: `https://assessment-seven-beta.vercel.app,http://localhost:5173`) | Comma-separated allowed origins. Set it to the frontend URL in production when hosting separately |
 | `SNAPSHOT_PATH` | `data/snapshot.json` | Data file, relative to `backend/` |
 | `STATIC_DIR` | `static` | Built frontend to serve, if present |
 | `LOG_LEVEL` | `INFO` | Python log level |
@@ -185,7 +186,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 |---|---|---|
 | `VITE_API_BASE_URL` | _(empty)_ | API origin when the frontend is hosted separately. Empty means same origin |
 | `VITE_PROXY_TARGET` | `http://127.0.0.1:8001` | Dev server only: where `/api` is proxied |
-| `VITE_SITE_URL` | _(empty)_ | Verified production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
+| `VITE_SITE_URL` | _(empty)_ (example: `https://assessment-seven-beta.vercel.app`) | Production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
 | `VITE_CONTACT_EMAIL` | _(empty)_ | Shown as a `mailto:` link in the footer and legal pages when set |
 | `VITE_OPERATOR_NAME` | _(empty)_ | Operator's legal name, shown on the legal pages when set |
 
@@ -313,7 +314,40 @@ Browser checks used headless Microsoft Edge. These are emulated widths, not a ph
 
 ## Deployment
 
-**Not deployed yet.** You will do this yourselves. Two options work as-is:
+**Current status (checked 25 Oct 2026)**
+
+| Part | URL | Status |
+|---|---|---|
+| Frontend (Vercel) | https://assessment-seven-beta.vercel.app | Live over HTTPS; `http://` redirects to `https://` |
+| Backend API (Render) | https://assessment-feb1.onrender.com | Live: `/api/health` returns `{"status":"ok",…}` (docs at `/docs`); CORS allows only the Vercel site; HSTS on. The frontend shows data once `VITE_API_BASE_URL` is set in Vercel and the site is redeployed |
+| Deep links (`/accuracy`, `/method`, `/privacy`, `/terms`) | — | Return Vercel's 404 until a rewrite to `/index.html` is added |
+
+To finish the split deployment:
+
+1. **Host the backend on Render** (New → Web Service, from this repo):
+
+   | Setting | Value |
+   |---|---|
+   | Root Directory | `backend` |
+   | Runtime | Python 3 |
+   | Build Command | `pip install -r requirements.txt` |
+   | Start Command | `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*` |
+   | Health Check Path | `/api/health` |
+   | Environment | `PYTHON_VERSION=3.12.7`, `CORS_ORIGINS=https://assessment-seven-beta.vercel.app`, `ENABLE_HSTS=true`, `LOG_LEVEL=INFO` |
+
+   Use `python -m uvicorn` rather than plain `uvicorn`, so the start step finds the packages the build installed. On the free plan the service sleeps when idle, and the first request afterwards takes about 30–60 s.
+2. **Set the Vercel environment variables**, then redeploy:
+   - `VITE_API_BASE_URL=https://assessment-feb1.onrender.com`
+   - `VITE_SITE_URL=https://assessment-seven-beta.vercel.app`
+
+   Vercel reads its own project settings, not the git-ignored `.env`.
+3. **Add the SPA rewrite on Vercel** so every non-file path serves `/index.html`.
+4. **Check the result:**
+   - https://assessment-feb1.onrender.com/api/health returns `{"status":"ok",…}`;
+   - every page of https://assessment-seven-beta.vercel.app loads data;
+   - deep links open directly.
+
+Two deployment options work with this code:
 
 - **Single service (simplest).** Build `backend/Dockerfile` with the repo root as context. It serves the API and frontend on `$PORT`. Set `ENABLE_HSTS=true` once HTTPS is confirmed.
 - **Split hosting.**
@@ -322,7 +356,7 @@ Browser checks used headless Microsoft Edge. These are emulated widths, not a ph
   3. Because the frontend uses path routes (`/accuracy`, `/method`…), the static host must **rewrite unknown paths to `/index.html`**. On Vercel this is a `rewrites` rule; without it, deep links return the host's 404.
   4. Security headers then need configuring on the static host, since FastAPI isn't serving the HTML.
 
-After deploying, open `/api/health` and each page over HTTPS, then add the URL at the top of this file.
+After deploying, open `/api/health` and each page over HTTPS, and update the status table above.
 
 ## Limitations
 
