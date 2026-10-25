@@ -1,0 +1,12 @@
+# Run from the backend/ folder:  docker compose up --build
+# The build context is the repo root so the image can also build ../frontend.
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: "8001"
+    restart: unless-stopped
