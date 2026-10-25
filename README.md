@@ -5,10 +5,10 @@ A web app for the team at a UK energy utility that buys power in the GB day-ahea
 1. **The wind forecast that was available at the moment of purchase.** This is the latest Elexon `WINDFOR` run published before the day-ahead cutoff on D-1, compared with metered `FUELHH` wind output.
 2. **How far that forecast can be trusted.** MAE, RMSE, bias and WAPE, error percentiles, error by lead time, hour and day, plus a bias correction that uses only data available at decision time.
 
-**Live app (frontend, Vercel):** https://assessment-seven-beta.vercel.app
-**API (Render):** https://assessment-feb1.onrender.com (health: `/api/health`, docs: `/docs`)
+**Live app (frontend, Vercel):** https://q7m2vx.vercel.app
+**API (Render):** `[PENDING: new Render URL after the service is recreated for the renamed repo]` (health: `/api/health`, docs: `/docs`)
 
-> Verified on 25 Oct 2026 in a real browser: the Vercel site loads its data from the Render API, all API calls return 200, and there are no console errors. The free Render plan sleeps when idle, so the first load after a pause can take ~30–60 s. See [Deployment](#deployment).
+> Status 25 Oct 2026: the frontend is live at https://q7m2vx.vercel.app (all page links open). The backend is being recreated on Render after the repository rename, so the pages cannot load data until the new API URL is set in Vercel. See [Deployment](#deployment).
 
 **Demo video:** `[PLACEHOLDER: unlisted YouTube URL, to be added after recording]`
 
@@ -211,7 +211,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 | Variable | Default | Meaning |
 |---|---|---|
 | `PORT` | `8000` | Port inside the Docker container |
-| `CORS_ORIGINS` | `*` (example: `https://assessment-seven-beta.vercel.app,http://localhost:5173`) | Comma-separated allowed origins. Set it to the frontend URL in production when hosting separately |
+| `CORS_ORIGINS` | `*` (example: `https://q7m2vx.vercel.app,http://localhost:5173`) | Comma-separated allowed origins. Set it to the frontend URL in production when hosting separately |
 | `SNAPSHOT_PATH` | `data/snapshot.json` | Data file, relative to `backend/` |
 | `STATIC_DIR` | `static` | Built frontend to serve, if present |
 | `LOG_LEVEL` | `INFO` | Python log level |
@@ -223,7 +223,7 @@ Copy each `.env.example` to `.env`. Real `.env` files are git-ignored and exclud
 |---|---|---|
 | `VITE_API_BASE_URL` | _(empty)_ | API origin when the frontend is hosted separately. Empty means same origin |
 | `VITE_PROXY_TARGET` | `http://127.0.0.1:8000` | Dev server only: where `/api` is proxied |
-| `VITE_SITE_URL` | _(empty)_ (example: `https://assessment-seven-beta.vercel.app`) | Production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
+| `VITE_SITE_URL` | _(empty)_ (example: `https://q7m2vx.vercel.app`) | Production URL. Enables canonical links, absolute OG image URLs and `sitemap.xml` |
 | `VITE_CONTACT_EMAIL` | _(empty)_ | Shown as a `mailto:` link in the footer and legal pages when set |
 | `VITE_OPERATOR_NAME` | _(empty)_ | Operator's legal name, shown on the legal pages when set |
 
@@ -338,7 +338,7 @@ The tests cover:
 - security headers, unknown API routes, search length limits, and SPA routes with a real 404 status.
 
 Browser checks used headless Microsoft Edge, driven with real mouse, keyboard and scroll input via the DevTools protocol. These are emulated widths, not a physical mobile device:
-- **Live site (25 Oct 2026):** https://assessment-seven-beta.vercel.app loaded real data from the Render API: every API call returned 200, there were no console errors, and in-app navigation worked.
+- **Live site (25 Oct 2026, before the rename):** the previous deployment (frontend on Vercel, API on Render) loaded real data in a real browser: every API call returned 200, there were no console errors, and in-app navigation worked.
 - **Docker container:** the same workflow ran against http://localhost:8000. Blocking the API showed the error state, and Retry recovered.
 - **Tables:** no table needs horizontal scrolling at 320 px or 375 px.
 - **Overflow:** every page at 320, 375, 390, 768, 1024 and 1440 px has no page-level horizontal overflow (after fixing one at 320 px).
@@ -360,8 +360,8 @@ Browser checks used headless Microsoft Edge, driven with real mouse, keyboard an
 
 | Part | URL | Status |
 |---|---|---|
-| Frontend (Vercel) | https://assessment-seven-beta.vercel.app | Live over HTTPS; `http://` redirects to `https://`. The build calls the Render API (`VITE_API_BASE_URL`) |
-| Backend API (Render) | https://assessment-feb1.onrender.com | Live: `/api/health` returns `{"status":"ok",…}` (docs at `/docs`). CORS allows only the Vercel site; HSTS is on |
+| Frontend (Vercel) | https://q7m2vx.vercel.app | Live over HTTPS, all page links open. The current build has **no** `VITE_API_BASE_URL`, so it cannot load data yet |
+| Backend API (Render) | `[PENDING]` | The previous service was removed; a new one is being created from the renamed repo (`q7m2vx`) |
 | Page links (`/accuracy`, `/method`, `/privacy`, `/terms`) | — | Live: `frontend/vercel.json` rewrites them to `/index.html`, and each opens directly. Static files (`/robots.txt`, `/favicon.svg`, `/og-image.png`) are still served as files |
 
 ### How it is deployed (for reference)
@@ -375,13 +375,13 @@ Browser checks used headless Microsoft Edge, driven with real mouse, keyboard an
 | Build Command | `pip install -r requirements.txt` |
 | Start Command | `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*` |
 | Health Check Path | `/api/health` |
-| Environment | `PYTHON_VERSION=3.12.7`, `CORS_ORIGINS=https://assessment-seven-beta.vercel.app`, `ENABLE_HSTS=true`, `LOG_LEVEL=INFO` |
+| Environment | `PYTHON_VERSION=3.12.7`, `CORS_ORIGINS=https://q7m2vx.vercel.app`, `ENABLE_HSTS=true`, `LOG_LEVEL=INFO` |
 
 - Use `python -m uvicorn` rather than plain `uvicorn`, so the start step finds the packages the build installed.
 - On the free plan the service sleeps when idle; the first request afterwards takes about 30–60 s.
 
 **Frontend: Vercel project with Root Directory `frontend`**
-- Environment variables (Production): `VITE_API_BASE_URL=https://assessment-feb1.onrender.com` and `VITE_SITE_URL=https://assessment-seven-beta.vercel.app`. Vercel reads its own settings, not the git-ignored `.env`, and the values take effect on the next build.
+- Environment variables (Production): `VITE_API_BASE_URL=<Render URL>` and `VITE_SITE_URL=https://q7m2vx.vercel.app`. Vercel reads its own settings, not the git-ignored `.env`, and the values take effect on the next build.
 - `frontend/vercel.json` provides the SPA rewrite, security headers and asset caching.
 
 **Alternative: a single service.** Build `backend/Dockerfile` with the repo root as context. It serves the API and the pages on `$PORT`, with page routes, real 404 status and the CSP handled by FastAPI. Set `ENABLE_HSTS=true` when it is behind HTTPS.
