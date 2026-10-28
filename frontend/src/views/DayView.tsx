@@ -348,7 +348,7 @@ function MainChart({ d }: { d: DayDetail }) {
               {...AXIS}
             />
             <YAxis width={58} domain={[0, yTicks[yTicks.length - 1]]} ticks={yTicks} tickFormatter={(v) => fmt0(v)} {...AXIS} />
-            <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--border-strong)" }} />
+            <Tooltip content={<ChartTooltip on={on} />} cursor={{ stroke: "var(--border-strong)" }} />
             {on.band && (
               <Area dataKey="band" stroke="none" fill="var(--forecast)" fillOpacity={0.12} connectNulls isAnimationActive={false} activeDot={false} />
             )}
@@ -382,7 +382,16 @@ function MainChart({ d }: { d: DayDetail }) {
   );
 }
 
-function ChartTooltip({ active, payload }: { active?: boolean; payload?: { payload: Row }[] }) {
+// Overlay values only appear in the tooltip when that overlay is switched on.
+function ChartTooltip({
+  active,
+  payload,
+  on,
+}: {
+  active?: boolean;
+  payload?: { payload: Row }[];
+  on: Record<Overlay, boolean>;
+}) {
   if (!active || !payload?.length) return null;
   const r = payload[0].payload;
   const start = new Date(r.t).toISOString();
@@ -400,9 +409,9 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
       value: onHour && r.actual != null ? signedMw(r.forecast! - r.actual) : "not matched",
     },
   ];
-  if (r.band) rows.push({ label: "P10–P90", value: `${fmt0(r.band[0])}–${fmt0(r.band[1])} MW` });
-  if (r.corrected != null) rows.push({ label: "Bias-adjusted", value: mw(r.corrected) });
-  if (r.final != null) rows.push({ label: "Last before delivery", value: mw(r.final) });
+  if (on.band && r.band) rows.push({ label: "P10–P90", value: `${fmt0(r.band[0])}–${fmt0(r.band[1])} MW` });
+  if (on.corrected && r.corrected != null) rows.push({ label: "Bias-adjusted", value: mw(r.corrected) });
+  if (on.final && r.final != null) rows.push({ label: "Last before delivery", value: mw(r.final) });
   return <TooltipBox title={`${ukTime(start)}–${ukTime(end)} ${tzName(start)}`} rows={rows} />;
 }
 
