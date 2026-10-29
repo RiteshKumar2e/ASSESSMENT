@@ -5,6 +5,16 @@ A web app for the team at a UK energy utility that buys power in the GB day-ahea
 1. **The wind forecast that was available at the moment of purchase.** This is the latest Elexon `WINDFOR` run published before the day-ahead cutoff on D-1, compared with metered `FUELHH` wind output.
 2. **How far that forecast can be trusted.** MAE, RMSE, bias and WAPE, error percentiles, error by lead time, hour and day, plus a bias correction that uses only data available at decision time.
 
+### At a glance
+
+| Area | Details |
+| ---- | ------- |
+| **Purpose** | Evaluate whether the wind forecast available before the day-ahead decision was reliable |
+| **Data** | Elexon BMRS national wind forecasts and metered generation |
+| **Coverage** | Decisions made in January 2026; delivery days from 2 January to 1 February 2026 |
+| **Stack** | React + TypeScript + Vite, Python + FastAPI, Docker |
+| **Output** | Interactive day-ahead analysis, accuracy metrics, data-quality report and CSV exports |
+
 **Live app (frontend, Vercel):** https://q7m2vx.vercel.app
 **API (Render):** https://q7m2vx.onrender.com (health: [`/api/health`](https://q7m2vx.onrender.com/api/health), docs: [`/docs`](https://q7m2vx.onrender.com/docs))
 
