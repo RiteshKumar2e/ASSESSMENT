@@ -20,6 +20,14 @@ A web app for the team at a UK energy utility that buys power in the GB day-ahea
 
 The scope is Elexon BMRS national wind only. Built with React + TypeScript (frontend) and Python FastAPI (backend), with Docker.
 
+## Quick links
+
+- **Live app:** https://q7m2vx.vercel.app
+- **API health:** https://q7m2vx.onrender.com/api/health
+- **Interactive API docs:** https://q7m2vx.onrender.com/docs
+- **Run locally:** see [Running it](#running-it)
+- **Deploy with Docker:** see [With Docker](#with-docker-windows-11--docker-desktop-wsl-2)
+
 ---
 
 ## The business problem
