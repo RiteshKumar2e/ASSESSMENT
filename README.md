@@ -38,6 +38,14 @@ The scope is Elexon BMRS national wind only. Built with React + TypeScript (fron
 - **Run locally:** see [Running it](#running-it)
 - **Deploy with Docker:** see [With Docker](#with-docker-windows-11--docker-desktop-wsl-2)
 
+## Project highlights
+
+- **Decision-time accurate:** forecasts are selected using only runs published before the chosen cutoff; later information is never used.
+- **Reproducible:** the committed snapshot keeps the analysis stable, while the snapshot command can refresh data from Elexon.
+- **Auditable:** cleaning rules, unmatched records, source ranges and retrieval details are visible in the Method & data page.
+- **Practical exports:** the main tables and analysis views can be downloaded as CSV for further review.
+- **Production-ready flow:** the app includes retryable API errors, health checks, security headers, responsive layouts and Docker deployment.
+
 ---
 
 ## The business problem
